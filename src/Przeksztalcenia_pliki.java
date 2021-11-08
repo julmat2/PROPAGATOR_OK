@@ -37,10 +37,10 @@ public class Przeksztalcenia_pliki {
         double int1 = 0.00000000;
         double int2 = 0.00000000;
 
-//        if(plik1.exists())
-//            System.out.println("1");
-//        if(plik2.exists())
-//            System.out.println("2");
+        if(plik1.exists())
+            System.out.println("plik 1 - ok");
+        if(plik2.exists())
+            System.out.println("plik 2 - ok");
 
         Scanner p1 = new Scanner(plik1);
 
@@ -97,7 +97,7 @@ public class Przeksztalcenia_pliki {
                     output1.print("\n");
                     output2.print("\n");
                     x++;
-                    //System.out.println(p2_dane[0] +"\t"+ p1_dane[0]);
+                    System.out.println(p2_dane[0] +"\t"+ p1_dane[0]);
                     break;
                 }
             }

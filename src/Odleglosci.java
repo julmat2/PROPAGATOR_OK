@@ -106,6 +106,7 @@ public class Odleglosci {
         File plik3 = new File("C:/Users/matys/Desktop/PROGRAMY_STUDIA/INNE/test_kompilatora/wynik_pv_1ob.out");
         File plik4 = new File("C:/Users/matys/Desktop/PROGRAMY_STUDIA/INNE/test_kompilatora/wynik_pv_2ob.out");
         PrintWriter output3 = new PrintWriter("C:/Users/matys/Desktop/PROGRAMY_STUDIA/INNE/test_kompilatora/odleglosci.out");
+        System.out.println("Wykonuję obliczenia...\n" + "Proszę czekać...");
         Scanner p3 = new Scanner(plik3);
 
         int x1 = 0; //liczba ogarnietych linijek
