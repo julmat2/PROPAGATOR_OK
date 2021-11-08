@@ -1,0 +1,15 @@
+#   GNUPLOT v3.6 beta multiplot script file
+#
+reset
+set terminal postscript   color enhanced solid 16
+set encoding iso_8859_2
+
+unset log
+unset label
+set term jpeg
+set output 'odleglosci.jpeg'
+set ylabel "range [m]"
+set xlabel  "Time from initial date [s]"
+set autoscale
+plot "odleglosci.out" using 2:3 w l  lt 3 lw 3
+
