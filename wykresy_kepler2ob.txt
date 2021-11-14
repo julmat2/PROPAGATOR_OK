@@ -1,0 +1,52 @@
+#   GNUPLOT v3.6 beta multiplot script file
+#
+reset
+set terminal postscript   color enhanced solid 16
+set encoding iso_8859_2
+
+unset log
+unset label
+set term jpeg
+set output 'a2.jpeg'
+set ylabel "a [m]"
+set xlabel  "Time from initial date [s]"
+set autoscale
+plot "wynik_kepler_2ob.out" using 2:3 w l  lt 3 lw 3
+
+set output 'e2.jpeg'
+set ylabel "e"
+set xlabel  "Time from initial date [s]"
+plot "wynik_kepler_2ob.out" using 2:4 w l  lt 1 lw 3
+
+set output 'i2.jpeg'
+set ylabel "I [deg]"
+set xlabel  "Time from initial date [s]"
+plot "wynik_kepler_2ob.out" using 2:5 w l  lt 2 lw 3
+
+set output 'omega2.jpeg'
+set ylabel "omega [deg]"
+set xlabel  "Time from initial date [s]"
+plot "wynik_kepler_2ob.out" using 2:6 w l  lt 4 lw 3
+
+set output 'raan2.jpeg'
+set ylabel "raan [deg]"
+set xlabel  "Time from initial date [s]"
+plot "wynik_kepler_2ob.out" using 2:7 w l  lt 6 lw 3
+
+set output 'lM2.jpeg'
+set ylabel "lM [deg]"
+set xlabel  "Time from initial date [s]"
+plot "wynik_kepler_2ob.out" using 2:8 w l  lt 7 lw 3
+
+
+set output 'perygeum2.jpeg'
+set ylabel "perygeum [m]"
+set xlabel  "Time from initial date [s]"
+plot "wynik_kepler_2ob.out" using 2:((1-$4)*$3) w l  lt 7 lw 3
+
+set output 'apogeum2.jpeg'
+set ylabel "apogeum [m]"
+set xlabel  "Time from initial date [s]"
+plot "wynik_kepler_2ob.out" using 2:((1+$4)*$3) w l  lt 7 lw 3
+
+

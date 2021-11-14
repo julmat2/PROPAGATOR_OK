@@ -1,0 +1,39 @@
+#Nazwa obiektu
+# Numer np norad, cospar
+#date
+#semi major axis in meters
+#eccentricity
+#inclination [deg] 
+#perigee argument [deg]
+#right ascension of ascending node [deg]
+#mean anomaly
+#mass 
+#area
+
+initialDate: 2021-10-22T03:29:21.019
+#OBIEKT GŁÓWNY (1 obiekt)
+#GEO 
+date: 2021-10-20T03:29:21.019
+a: 42142163.48852012
+e: 0.005679933714923116
+i: 3.1164619936245805
+omega: 81.65260212923967
+raan: 76.84959485768466
+lM: -160.90403684622387
+mass: 39
+area: 0.4189
+pressureCr: 2.0
+dragCd: 2.0
+#KANDYDAT (2obiekt)
+#HEO
+date1: 2021-10-19T06:31:13.314
+a1: 23248568.515435066
+e1: 0.6607617429948597
+i1: 64.12944430393931
+omega1: -75.88276587975086
+raan1: -98.24823003119049
+lM1: 15.094249865322526
+mass1: 1600
+area1: 6.16
+pressureCr1: 2.0
+dragCd1: 2.0
