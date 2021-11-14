@@ -43,8 +43,6 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 
-
-
 public class PropagatorNumeryczny_DOBRY_PROPAGATOR {
     public static void main(String[] args) throws FileNotFoundException {
 
@@ -200,7 +198,7 @@ public class PropagatorNumeryczny_DOBRY_PROPAGATOR {
             Frame inertialFrame = FramesFactory.getEME2000();
             double mu = Constants.EGM96_EARTH_MU; //m3/s2
 
-//            final NormalizedSphericalHarmonicsProvider gravityField = createGravityField(config.getCentralBody());
+
 
 
             // IERS conventions
@@ -233,7 +231,7 @@ public class PropagatorNumeryczny_DOBRY_PROPAGATOR {
 
             }
             //definiuję początkową orbitę - Cartesian Orbit
-            else if (type==2){
+            else if (type == 2) {
                 double x = elements_map.get("x");                 // semi major axis in meters
                 double y = elements_map.get("y");               // eccentricity
                 double z = elements_map.get("z");        // inclination
@@ -245,10 +243,10 @@ public class PropagatorNumeryczny_DOBRY_PROPAGATOR {
                 area = elements_map.get("area");
 
                 //initialOrbit = new CartesianOrbit(x,y,z,vx,vy,vz,inertialFrame, date1ob, mu);
-                Vector3D position = new Vector3D(x,y,z);
-                Vector3D velocity = new Vector3D(vx,vy,vz);
-                PVCoordinates pv= new PVCoordinates(position,velocity);
-                initialOrbit = new CartesianOrbit(pv,inertialFrame,date1ob,mu);
+                Vector3D position = new Vector3D(x, y, z);
+                Vector3D velocity = new Vector3D(vx, vy, vz);
+                PVCoordinates pv = new PVCoordinates(position, velocity);
+                initialOrbit = new CartesianOrbit(pv, inertialFrame, date1ob, mu);
 
                 // Initial state definition
                 initialState = new SpacecraftState(initialOrbit);
@@ -259,11 +257,13 @@ public class PropagatorNumeryczny_DOBRY_PROPAGATOR {
             double minStep = propagator_map.get("minStep");
             double maxstep = propagator_map.get("maxStep");
             double positionTolerance = propagator_map.get("positionTolerance");
-            double durationTime = propagator_map.get("durationTime"); //sekundy
+            double durTime = propagator_map.get("durationTime"); //sekundy
             double propagationTime = propagator_map.get("propagationTime"); //sekundy
             //OrbitType propagationType = OrbitType.KEPLERIAN;
             OrbitType propagationType = OrbitType.CARTESIAN;
             propagationTime = propagationTime + date1obToIniDate;
+            double durationTime = 0.001;
+
             double[][] tolerances =
                     NumericalPropagator.tolerances(positionTolerance, initialOrbit, propagationType);
             AdaptiveStepsizeIntegrator integrator =
@@ -392,29 +392,45 @@ public class PropagatorNumeryczny_DOBRY_PROPAGATOR {
 
             }
 
-            System.out.println("          date         timeFromStart     a           e" +
+            System.out.println(" step[s]         date         timeFromEpoch_obj1[days]     a           e" +
                     "           i         \u03c9          \u03a9" +
                     "          M");
-            class TutorialStepHandler implements OrekitFixedStepHandler {
 
 
-                public void handleStep(SpacecraftState currentState, boolean isLast) {
 
-                    KeplerianOrbit o = (KeplerianOrbit) OrbitType.KEPLERIAN.convertType(currentState.getOrbit());
+            AbsoluteDate finalDate = date1ob.shiftedBy(propagationTime);
+            long iter = 0;
+            double stepT = 60.0;
+            System.out.format(Locale.US, "%s %s %s%n", date1ob, initialDate, initialDate.shiftedBy(-180.0).getDate());
+            boolean start = false;
+            for (AbsoluteDate extrapDate = date1ob;
+                 extrapDate.compareTo(finalDate) <= 0;
+                 extrapDate = extrapDate.shiftedBy(stepT)) {
 
-                    System.out.format(Locale.US, "%s %12.8f %12.3f %10.8f %10.6f %10.6f %10.6f %10.6f%n",
-                            currentState.getDate(),
-                            currentState.getDate().durationFrom(date1ob),
-                            o.getA(), o.getE(),
-                            FastMath.toDegrees(o.getI()),
-                            FastMath.toDegrees(o.getPerigeeArgument()),
-                            FastMath.toDegrees(o.getRightAscensionOfAscendingNode()),
-                            FastMath.toDegrees(MathUtils.normalizeAngle(o.getMeanAnomaly(), FastMath.PI)));
+                if (extrapDate.compareTo(initialDate.shiftedBy(-60.0)) >= 0) {
+                    stepT = 0.001;
+                }
+                if (extrapDate.compareTo(initialDate) >= 0) {
+                    stepT = durTime;
+                    start = true;
+                }
+                SpacecraftState currentState = propagator.propagate(extrapDate);
+//                if(iter%1000==0) {
+                KeplerianOrbit o = (KeplerianOrbit) OrbitType.KEPLERIAN.convertType(currentState.getOrbit());
+                System.out.format(Locale.US, " %s %s %12.8f %12.3f %10.8f %10.6f %10.6f %10.6f %10.6f%n",
+                        stepT, currentState.getDate(),
+                        currentState.getDate().durationFrom(date1ob)/86400.0,
+                        o.getA(), o.getE(),
+                        FastMath.toDegrees(o.getI()),
+                        FastMath.toDegrees(o.getPerigeeArgument()),
+                        FastMath.toDegrees(o.getRightAscensionOfAscendingNode()),
+                        FastMath.toDegrees(MathUtils.normalizeAngle(o.getMeanAnomaly(), FastMath.PI)));
 
 
+                if (start) {
                     output.format(Locale.US, "%s %12.8f %12.3f %10.8f %10.6f %10.6f %10.6f %10.6f%n",
                             currentState.getDate(),
-                            currentState.getDate().durationFrom(date1ob),
+                            currentState.getDate().durationFrom(date1ob)/86400.0,
                             o.getA(),
                             o.getE(),
                             FastMath.toDegrees(o.getI()),
@@ -425,7 +441,7 @@ public class PropagatorNumeryczny_DOBRY_PROPAGATOR {
 
                     output1.format(Locale.US, "%s %12.8f %23.16e %23.16e %23.16e %23.16e %23.16e%n",
                             currentState.getDate(),
-                            currentState.getDate().durationFrom(date1ob),
+                            currentState.getDate().durationFrom(date1ob)/86400.0,
                             o.getEquinoctialEy(), // h
                             o.getEquinoctialEx(), // k
                             o.getHy(),            // p
@@ -435,7 +451,7 @@ public class PropagatorNumeryczny_DOBRY_PROPAGATOR {
 
                     output2.format(Locale.US, "%s %12.8f %12.3f %10.8f %10.6f %10.6f %10.6f %10.6f%n",
                             currentState.getDate(),
-                            currentState.getDate().durationFrom(date1ob),
+                            currentState.getDate().durationFrom(date1ob)/86400.0,
                             currentState.getOrbit().getA(),
                             currentState.getOrbit().getEquinoctialEy(), // h
                             currentState.getOrbit().getEquinoctialEx(), // k
@@ -447,21 +463,17 @@ public class PropagatorNumeryczny_DOBRY_PROPAGATOR {
                     final PVCoordinates pv = currentState.getPVCoordinates();
                     output3.format(Locale.US, "%s %12.8f %12.3f %10.8f %10.6f %10.6f %10.6f %10.6f%n",
                             currentState.getDate(),
-                            currentState.getDate().durationFrom(date1ob),
+                            currentState.getDate().durationFrom(date1ob)/86400.0,
                             pv.getPosition().getX() * 0.001, //"position along X (km)"
                             pv.getPosition().getY() * 0.001, //"position along Y (km)"
                             pv.getPosition().getZ() * 0.001, //"position along Y (km)"
                             pv.getVelocity().getX() * 0.001, //"velocity along X (km/s)"
                             pv.getVelocity().getY() * 0.001, //"velocity along Y (km/s)"
                             pv.getVelocity().getZ() * 0.001); //"velocity along Z (km/s)"
-
-
                 }
 
             }
 
-            propagator.setMasterMode(durationTime, new TutorialStepHandler());
-            SpacecraftState finalState = propagator.propagate(new AbsoluteDate(date1ob, propagationTime));
 
             output.close();
             output1.close();
@@ -801,19 +813,34 @@ public class PropagatorNumeryczny_DOBRY_PROPAGATOR {
 
             }
 
-            System.out.println("          date         timeFromStart     a           e" +
+            System.out.println(" step[s]         date         timeFromEpoch_obj2[days]     a           e" +
                     "           i         \u03c9          \u03a9" +
                     "          M");
-            class TutorialStepHandler implements OrekitFixedStepHandler {
 
 
-                public void handleStep(SpacecraftState currentState, boolean isLast) {
 
+                AbsoluteDate finalDate = date2ob.shiftedBy(propagationTime);
+                long iter1 = 0;
+                double stepT1 = 60.0;
+            System.out.format(Locale.US, "%s %s %s%n", date2ob, initialDate, initialDate.shiftedBy(-180.0).getDate());
+                boolean start1 = false;
+            for (AbsoluteDate extrapDate1 = date2ob;
+                 extrapDate1.compareTo(finalDate) <= 0;
+                extrapDate1 = extrapDate1.shiftedBy(stepT1)) {
+
+                    if (extrapDate1.compareTo(initialDate.shiftedBy(-60.0)) >= 0) {
+                        stepT1 = 0.001;
+                    }
+                    if (extrapDate1.compareTo(initialDate) >= 0) {
+                        stepT1 = durationTime;
+                        start1 = true;
+                    }
+                    SpacecraftState currentState = propagator1.propagate(extrapDate1);
+//                if(iter%1000==0) {
                     KeplerianOrbit o = (KeplerianOrbit) OrbitType.KEPLERIAN.convertType(currentState.getOrbit());
-
-                    System.out.format(Locale.US, "%s %12.8f %12.3f %10.8f %10.6f %10.6f %10.6f %10.6f%n",
-                            currentState.getDate(),
-                            currentState.getDate().durationFrom(date2ob),
+                    System.out.format(Locale.US, " %s %s %12.8f %12.3f %10.8f %10.6f %10.6f %10.6f %10.6f%n",
+                            stepT1, currentState.getDate(),
+                            currentState.getDate().durationFrom(date2ob)/86400.0,
                             o.getA(), o.getE(),
                             FastMath.toDegrees(o.getI()),
                             FastMath.toDegrees(o.getPerigeeArgument()),
@@ -821,55 +848,52 @@ public class PropagatorNumeryczny_DOBRY_PROPAGATOR {
                             FastMath.toDegrees(MathUtils.normalizeAngle(o.getMeanAnomaly(), FastMath.PI)));
 
 
-                    output4.format(Locale.US, "%s %12.8f %12.3f %10.8f %10.6f %10.6f %10.6f %10.6f%n",
-                            currentState.getDate(),
-                            currentState.getDate().durationFrom(date2ob),
-                            o.getA(), o.getE(),
-                            FastMath.toDegrees(o.getI()),
-                            FastMath.toDegrees(o.getPerigeeArgument()),
-                            FastMath.toDegrees(o.getRightAscensionOfAscendingNode()),
-                            FastMath.toDegrees(MathUtils.normalizeAngle(o.getMeanAnomaly(), FastMath.PI)));
+                    if (start1) {
+                        output4.format(Locale.US, "%s %12.8f %12.3f %10.8f %10.6f %10.6f %10.6f %10.6f%n",
+                                currentState.getDate(),
+                                currentState.getDate().durationFrom(date2ob)/86400.0,
+                                o.getA(),
+                                o.getE(),
+                                FastMath.toDegrees(o.getI()),
+                                FastMath.toDegrees(o.getPerigeeArgument()),
+                                FastMath.toDegrees(o.getRightAscensionOfAscendingNode()),
+                                FastMath.toDegrees(MathUtils.normalizeAngle(o.getMeanAnomaly(), FastMath.PI)));
 
 
-                    output5.format(Locale.US, "%s %12.8f %23.16e %23.16e %23.16e %23.16e %23.16e%n",
-                            currentState.getDate(),
-                            currentState.getDate().durationFrom(date2ob),
-                            o.getEquinoctialEy(), // h
-                            o.getEquinoctialEx(), // k
-                            o.getHy(),            // p
-                            o.getHx(),            // q
-                            FastMath.toDegrees(MathUtils.normalizeAngle(o.getLM(), FastMath.PI)));
+                        output5.format(Locale.US, "%s %12.8f %23.16e %23.16e %23.16e %23.16e %23.16e%n",
+                                currentState.getDate(),
+                                currentState.getDate().durationFrom(date2ob)/86400.0,
+                                o.getEquinoctialEy(), // h
+                                o.getEquinoctialEx(), // k
+                                o.getHy(),            // p
+                                o.getHx(),            // q
+                                FastMath.toDegrees(MathUtils.normalizeAngle(o.getLM(), FastMath.PI)));
 
 
-                    output6.format(Locale.US, "%s %12.8f %12.3f %10.8f %10.6f %10.6f %10.6f %10.6f%n",
-                            currentState.getDate(),
-                            currentState.getDate().durationFrom(date2ob),
-                            currentState.getOrbit().getA(),
-                            currentState.getOrbit().getEquinoctialEy(), // h
-                            currentState.getOrbit().getEquinoctialEx(), // k
-                            currentState.getOrbit().getHy(),            // p
-                            currentState.getOrbit().getHx(),            // q
-                            FastMath.toDegrees(MathUtils.normalizeAngle(currentState.getOrbit().getLM(), FastMath.PI)));
+                        output6.format(Locale.US, "%s %12.8f %12.3f %10.8f %10.6f %10.6f %10.6f %10.6f%n",
+                                currentState.getDate(),
+                                currentState.getDate().durationFrom(date2ob)/86400.0,
+                                currentState.getOrbit().getA(),
+                                currentState.getOrbit().getEquinoctialEy(), // h
+                                currentState.getOrbit().getEquinoctialEx(), // k
+                                currentState.getOrbit().getHy(),            // p
+                                currentState.getOrbit().getHx(),            // q
+                                FastMath.toDegrees(MathUtils.normalizeAngle(currentState.getOrbit().getLM(), FastMath.PI)));
 
 
-                    final PVCoordinates pv = currentState.getPVCoordinates();
-                    output7.format(Locale.US, "%s %12.8f %12.3f %10.8f %10.6f %10.6f %10.6f %10.6f%n",
-                            currentState.getDate(),
-                            currentState.getDate().durationFrom(date2ob),
-                            pv.getPosition().getX() * 0.001, //"position along X (km)"
-                            pv.getPosition().getY() * 0.001, //"position along Y (km)"
-                            pv.getPosition().getZ() * 0.001, //"position along Y (km)"
-                            pv.getVelocity().getX() * 0.001, //"velocity along X (km/s)"
-                            pv.getVelocity().getY() * 0.001, //"velocity along Y (km/s)"
-                            pv.getVelocity().getZ() * 0.001); //"velocity along Z (km/s)"
-
+                        final PVCoordinates pv = currentState.getPVCoordinates();
+                        output7.format(Locale.US, "%s %12.8f %12.3f %10.8f %10.6f %10.6f %10.6f %10.6f%n",
+                                currentState.getDate(),
+                                currentState.getDate().durationFrom(date2ob)/86400.0,
+                                pv.getPosition().getX() * 0.001, //"position along X (km)"
+                                pv.getPosition().getY() * 0.001, //"position along Y (km)"
+                                pv.getPosition().getZ() * 0.001, //"position along Y (km)"
+                                pv.getVelocity().getX() * 0.001, //"velocity along X (km/s)"
+                                pv.getVelocity().getY() * 0.001, //"velocity along Y (km/s)"
+                                pv.getVelocity().getZ() * 0.001); //"velocity along Z (km/s)"
+                    }
 
                 }
-
-            }
-
-            propagator1.setMasterMode(durationTime, new TutorialStepHandler());
-            SpacecraftState finalState = propagator1.propagate(new AbsoluteDate(date2ob, propagationTime));
 
             output4.close();
             output5.close();

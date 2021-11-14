@@ -8,6 +8,7 @@ import org.orekit.bodies.OneAxisEllipsoid;
 import org.orekit.data.DataContext;
 import org.orekit.data.DataProvidersManager;
 import org.orekit.data.DirectoryCrawler;
+import org.orekit.errors.OrekitException;
 import org.orekit.forces.ForceModel;
 import org.orekit.forces.drag.DragForce;
 import org.orekit.forces.drag.IsotropicDrag;
@@ -25,6 +26,7 @@ import org.orekit.models.earth.atmosphere.data.CssiSpaceWeatherData;
 import org.orekit.models.earth.atmosphere.data.MarshallSolarActivityFutureEstimation;
 import org.orekit.orbits.*;
 import org.orekit.propagation.SpacecraftState;
+import org.orekit.propagation.events.AltitudeDetector;
 import org.orekit.propagation.numerical.NumericalPropagator;
 import org.orekit.propagation.sampling.OrekitFixedStepHandler;
 import org.orekit.time.AbsoluteDate;
@@ -205,6 +207,7 @@ public class PropagatorNumeryczny_REENTRY {
             // central body
             final OneAxisEllipsoid body = new OneAxisEllipsoid(Constants.IERS2010_EARTH_EQUATORIAL_RADIUS, Constants.IERS2010_EARTH_FLATTENING, FramesFactory.getITRF(IERSconventions, true));
 
+
 //definiuję początkową orbitę - Keplerian Orbit
             Orbit initialOrbit = null;
             SpacecraftState initialState = null;
@@ -266,9 +269,12 @@ public class PropagatorNumeryczny_REENTRY {
                     new DormandPrince853Integrator(minStep, maxstep, tolerances[0], tolerances[1]);
 
             NumericalPropagator propagator = new NumericalPropagator(integrator);
+//            propagator.addEventDetector(new AltitudeDetector(0.0,body));
             propagator.setOrbitType(propagationType);
 
             propagator.setInitialState(initialState);
+
+
 
 
 //dodaję modele sił
@@ -453,7 +459,12 @@ public class PropagatorNumeryczny_REENTRY {
 
             }
 
+//            AltitudeDetector altitudeDetector = new AltitudeDetector(0.0, body);
+//            propagator.addEventDetector(altitudeDetector);
+
+
             propagator.setMasterMode(durationTime, new TutorialStepHandler());
+            //propagator.addEventDetector(new AltitudeDetector(0.0,body));
             SpacecraftState finalState = propagator.propagate(new AbsoluteDate(date1ob, propagationTime));
 
             output.close();
