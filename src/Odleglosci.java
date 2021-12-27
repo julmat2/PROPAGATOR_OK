@@ -123,9 +123,9 @@ public class Odleglosci {
                     output3.print(p3_dane[0] + "\t");
                     output3.print(p3_dane[1]+"\t");
                     //obiekt glowny - obiekt zblizajacy sie
-                    double X=Math.pow(Double.parseDouble(p3_dane[2])-Double.parseDouble(p4_dane[2]),2);
-                    double Y=Math.pow(Double.parseDouble(p3_dane[3])-Double.parseDouble(p4_dane[3]),2);
-                    double Z=Math.pow(Double.parseDouble(p3_dane[4])-Double.parseDouble(p4_dane[4]),2);
+                    double X=Math.pow(Double.parseDouble(p4_dane[2])-Double.parseDouble(p3_dane[2]),2);
+                    double Y=Math.pow(Double.parseDouble(p4_dane[3])-Double.parseDouble(p3_dane[3]),2);
+                    double Z=Math.pow(Double.parseDouble(p4_dane[4])-Double.parseDouble(p3_dane[4]),2);
                     double odleglosci = Math.sqrt(X+Y+Z);
                     output3.print(odleglosci);
                     output3.print("\n");
