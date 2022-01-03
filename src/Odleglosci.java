@@ -1,3 +1,5 @@
+import org.hipparchus.geometry.euclidean.threed.Vector3D;
+
 import java.io.*;
 import java.util.*;
 import java.lang.*;
@@ -123,11 +125,16 @@ public class Odleglosci {
                     output3.print(p3_dane[0] + "\t");
                     output3.print(p3_dane[1]+"\t");
                     //obiekt glowny - obiekt zblizajacy sie
+//                    Vector3D p_sat1= new Vector3D(Double.parseDouble(p4_dane[2]),Double.parseDouble(p4_dane[3]),Double.parseDouble(p4_dane[4]));
+//                    Vector3D p_sat2= new Vector3D(Double.parseDouble(p3_dane[2]),Double.parseDouble(p3_dane[3]),Double.parseDouble(p3_dane[4]));
+//                    double distance = Vector3D.distance(p_sat1,p_sat2);
+
                     double X=Math.pow(Double.parseDouble(p4_dane[2])-Double.parseDouble(p3_dane[2]),2);
                     double Y=Math.pow(Double.parseDouble(p4_dane[3])-Double.parseDouble(p3_dane[3]),2);
                     double Z=Math.pow(Double.parseDouble(p4_dane[4])-Double.parseDouble(p3_dane[4]),2);
                     double odleglosci = Math.sqrt(X+Y+Z);
                     output3.print(odleglosci);
+                    //output3.print(distance);
                     output3.print("\n");
                 }
             }

@@ -1,5 +1,6 @@
 import org.hipparchus.geometry.euclidean.threed.Vector3D;
 import org.hipparchus.ode.nonstiff.AdaptiveStepsizeIntegrator;
+import org.hipparchus.ode.nonstiff.ClassicalRungeKuttaIntegrator;
 import org.hipparchus.ode.nonstiff.DormandPrince853Integrator;
 import org.hipparchus.util.FastMath;
 import org.hipparchus.util.MathUtils;
@@ -14,8 +15,7 @@ import org.orekit.forces.drag.IsotropicDrag;
 import org.orekit.forces.gravity.HolmesFeatherstoneAttractionModel;
 import org.orekit.forces.gravity.OceanTides;
 import org.orekit.forces.gravity.ThirdBodyAttraction;
-import org.orekit.forces.gravity.potential.GravityFieldFactory;
-import org.orekit.forces.gravity.potential.NormalizedSphericalHarmonicsProvider;
+import org.orekit.forces.gravity.potential.*;
 import org.orekit.forces.radiation.IsotropicRadiationSingleCoefficient;
 import org.orekit.forces.radiation.SolarRadiationPressure;
 import org.orekit.frames.Frame;
@@ -28,7 +28,6 @@ import org.orekit.propagation.SpacecraftState;
 import org.orekit.propagation.analytical.tle.TLE;
 import org.orekit.propagation.analytical.tle.TLEPropagator;
 import org.orekit.propagation.numerical.NumericalPropagator;
-import org.orekit.propagation.sampling.OrekitFixedStepHandler;
 import org.orekit.time.AbsoluteDate;
 import org.orekit.time.TimeScale;
 import org.orekit.time.TimeScalesFactory;
@@ -36,9 +35,11 @@ import org.orekit.utils.Constants;
 import org.orekit.utils.IERSConventions;
 import org.orekit.utils.PVCoordinates;
 import org.orekit.utils.PVCoordinatesProvider;
+import org.w3c.dom.Node;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -121,7 +122,7 @@ public class PropagatorNumeryczny_DOBRY_PROPAGATOR {
 
                     //System.out.println("1: '"+dane1[0]+"' 2: '"+dane1[1]+"'"); //sprawdzenie jak wygląda tablica Stringów
 
-                    if (!dane1[0].equals("date") && !dane1[0].equals("initialDate") && !dane1[0].equals("date1") && !dane1[0].equals("line1_1") && !dane1[0].equals("line2_1")&& !dane1[0].equals("line1_2") && !dane1[0].equals("line2_2")) {
+                    if (!dane1[0].equals("date") && !dane1[0].equals("initialDate") && !dane1[0].equals("date1") && !dane1[0].equals("line1_1") && !dane1[0].equals("line2_1") && !dane1[0].equals("line1_2") && !dane1[0].equals("line2_2")) {
                         //jeśli wartość pierwszego elementu stringa to nie jest date -> zapisuje do mapy
                         //System.out.println(dane1[0]);
                         elements_map.put(dane1[0], Double.parseDouble(dane1[1]));
@@ -133,17 +134,13 @@ public class PropagatorNumeryczny_DOBRY_PROPAGATOR {
                             data1 = dane1[1];
                         } else if (dane1[0].equals("initialDate")) {
                             iniData = dane1[1];
-                        }
-                        else if (dane1[0].equals("line1_1")) {
+                        } else if (dane1[0].equals("line1_1")) {
                             line1_1 = dane1[1];
-                        }
-                        else if (dane1[0].equals("line2_1")) {
+                        } else if (dane1[0].equals("line2_1")) {
                             line2_1 = dane1[1];
-                        }
-                        else if (dane1[0].equals("line1_2")) {
+                        } else if (dane1[0].equals("line1_2")) {
                             line1_2 = dane1[1];
-                        }
-                        else if (dane1[0].equals("line2_2")) {
+                        } else if (dane1[0].equals("line2_2")) {
                             line2_2 = dane1[1];
                         }
                     }
@@ -174,6 +171,7 @@ public class PropagatorNumeryczny_DOBRY_PROPAGATOR {
             //Przypisanie wartości sił
 
             int gravity_force = forces_map.get("gravity");
+            int gravity_model = forces_map.get("gravity_model");
             int degree = forces_map.get("GMdegree");
             int order = forces_map.get("GMorder");
             int sun_force = forces_map.get("sun");
@@ -190,9 +188,6 @@ public class PropagatorNumeryczny_DOBRY_PROPAGATOR {
             AbsoluteDate initialDate = new AbsoluteDate(iniyear, inimonth, iniday, inihour, inimin, inisekPlusMili, utc);
 
 
-
-
-
             //definiuję ramkę odniesienia
             Frame inertialFrame = FramesFactory.getEME2000();
             double mu = Constants.EGM96_EARTH_MU; //m3/s2
@@ -205,8 +200,8 @@ public class PropagatorNumeryczny_DOBRY_PROPAGATOR {
             final OneAxisEllipsoid body = new OneAxisEllipsoid(Constants.IERS2010_EARTH_EQUATORIAL_RADIUS, Constants.IERS2010_EARTH_FLATTENING, FramesFactory.getITRF(IERSconventions, true));
 
             AbsoluteDate date1ob = null;
-            double area=0.0;
-            double mass=0.0;
+            double area = 0.0;
+            double mass = 0.0;
 
 //definiuję początkową orbitę - Keplerian Orbit
             Orbit initialOrbit = null;
@@ -295,7 +290,7 @@ public class PropagatorNumeryczny_DOBRY_PROPAGATOR {
                 date1ob = tle1.getDate();
                 initialState = propagatorTle.getInitialState();
 
-                initialOrbit=initialState.getOrbit();
+                initialOrbit = initialState.getOrbit();
 
 
             }
@@ -315,13 +310,13 @@ public class PropagatorNumeryczny_DOBRY_PROPAGATOR {
             OrbitType propagationType = OrbitType.CARTESIAN;
 
 
-
             double[][] tolerances =
                     NumericalPropagator.tolerances(positionTolerance, initialOrbit, propagationType);
 
             AdaptiveStepsizeIntegrator integrator =
                     new DormandPrince853Integrator(minStep, maxstep, tolerances[0], tolerances[1]);
 
+            // ClassicalRungeKuttaIntegrator integrator = new ClassicalRungeKuttaIntegrator(durTime);
             NumericalPropagator propagator = new NumericalPropagator(integrator);
             propagator.setOrbitType(propagationType);
 
@@ -331,8 +326,10 @@ public class PropagatorNumeryczny_DOBRY_PROPAGATOR {
 //dodaję modele sił
             //GRAWITACJA
 
-            NormalizedSphericalHarmonicsProvider provider =
-                    GravityFieldFactory.getNormalizedProvider(degree, order);
+
+     NormalizedSphericalHarmonicsProvider provider = GravityFieldFactory.getNormalizedProvider(degree, order);
+
+
             ForceModel holmesFeatherstone =
                     new HolmesFeatherstoneAttractionModel(FramesFactory.getITRF(IERSConventions.IERS_2010, true), provider);
 
@@ -619,7 +616,6 @@ double durationTime=date1obToIniDate;
 
             LocalDateTime iniDate = LocalDateTime.parse(iniData, formatter);
 
-
 //            //data początku propagacji
             int iniyear = iniDate.getYear();
             int inimonth = iniDate.getMonthValue();
@@ -632,6 +628,30 @@ double durationTime=date1obToIniDate;
 
 //ELEMENTY OBIEKTU GłÓWNEGO
             double type = elements_map.get("type");
+
+            AbsoluteDate date1ob = null;
+            if (type==1 || type==2){
+                LocalDateTime date = LocalDateTime.parse(data, formatter);
+                int year = date.getYear();
+                int month = date.getMonthValue();
+                int day = date.getDayOfMonth();
+                int hour = date.getHour();
+                int min = date.getMinute();
+                int sec = date.getSecond();
+                double miliSec = date.getNano() / 1000000;
+                double sekPlusMili = sec + miliSec / 1000.0;
+                TimeScale utc = TimeScalesFactory.getUTC();
+                date1ob = new AbsoluteDate(year, month, day, hour, min, sekPlusMili, utc);
+            }
+            else if (type ==3){
+                TLE tle1 = new TLE(line1_1, line2_1);
+
+                TLEPropagator propagatorTle = TLEPropagator.selectExtrapolator(tle1);
+                double mass = elements_map.get("mass"); //satellite mass
+                double area = elements_map.get("area");
+
+                date1ob = tle1.getDate();
+            }
 
             //Przypisanie wartości sił
 
@@ -783,6 +803,7 @@ double durationTime=date1obToIniDate;
             AdaptiveStepsizeIntegrator integrator1 =
                     new DormandPrince853Integrator(minStep, maxstep, tolerances1[0], tolerances1[1]);
 
+            //ClassicalRungeKuttaIntegrator integrator1 = new ClassicalRungeKuttaIntegrator(durationTime);
             NumericalPropagator propagator1 = new NumericalPropagator(integrator1);
             propagator1.setOrbitType(propagationType);
 
@@ -942,7 +963,7 @@ double durationTime=date1obToIniDate;
                     KeplerianOrbit o = (KeplerianOrbit) OrbitType.KEPLERIAN.convertType(currentState.getOrbit());
                     System.out.format(Locale.US, " %s %s %12.8f %12.3f %10.8f %10.6f %10.6f %10.6f %10.6f%n",
                             stepT1, currentState.getDate(),
-                            currentState.getDate().durationFrom(date2ob)/86400.0,
+                            currentState.getDate().durationFrom(date1ob)/86400.0,
                             o.getA(), o.getE(),
                             FastMath.toDegrees(o.getI()),
                             FastMath.toDegrees(o.getPerigeeArgument()),
@@ -953,7 +974,7 @@ double durationTime=date1obToIniDate;
                     if (start1) {
                         output4.format(Locale.US, "%s %12.8f %12.3f %10.8f %10.6f %10.6f %10.6f %10.6f%n",
                                 currentState.getDate(),
-                                currentState.getDate().durationFrom(date2ob)/86400.0,
+                                currentState.getDate().durationFrom(date1ob)/86400.0,
                                 o.getA(),
                                 o.getE(),
                                 FastMath.toDegrees(o.getI()),
@@ -964,7 +985,7 @@ double durationTime=date1obToIniDate;
 
                         output5.format(Locale.US, "%s %12.8f %23.16e %23.16e %23.16e %23.16e %23.16e%n",
                                 currentState.getDate(),
-                                currentState.getDate().durationFrom(date2ob)/86400.0,
+                                currentState.getDate().durationFrom(date1ob)/86400.0,
                                 o.getEquinoctialEy(), // h
                                 o.getEquinoctialEx(), // k
                                 o.getHy(),            // p
@@ -974,7 +995,7 @@ double durationTime=date1obToIniDate;
 
                         output6.format(Locale.US, "%s %12.8f %12.3f %10.8f %10.6f %10.6f %10.6f %10.6f%n",
                                 currentState.getDate(),
-                                currentState.getDate().durationFrom(date2ob)/86400.0,
+                                currentState.getDate().durationFrom(date1ob)/86400.0,
                                 currentState.getOrbit().getA(),
                                 currentState.getOrbit().getEquinoctialEy(), // h
                                 currentState.getOrbit().getEquinoctialEx(), // k
@@ -986,7 +1007,7 @@ double durationTime=date1obToIniDate;
                         final PVCoordinates pv = currentState.getPVCoordinates();
                         output7.format(Locale.US, "%s %12.8f %12.3f %10.8f %10.6f %10.6f %10.6f %10.6f%n",
                                 currentState.getDate(),
-                                currentState.getDate().durationFrom(date2ob)/86400.0,
+                                currentState.getDate().durationFrom(date1ob)/86400.0,
                                 pv.getPosition().getX() * 0.001, //"position along X (km)"
                                 pv.getPosition().getY() * 0.001, //"position along Y (km)"
                                 pv.getPosition().getZ() * 0.001, //"position along Y (km)"
