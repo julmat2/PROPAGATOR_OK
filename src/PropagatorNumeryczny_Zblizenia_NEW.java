@@ -39,8 +39,10 @@ import org.orekit.utils.PVCoordinatesProvider;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.text.DateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.JulianFields;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -302,7 +304,7 @@ public class PropagatorNumeryczny_Zblizenia_NEW {
                 cr = elements_map.get("pressureCr");
                 cd = elements_map.get("dragCd");
 
-               date1ob=tle1.getDate();
+                date1ob = tle1.getDate();
                 initialState = propagatorTle.getInitialState();
 
                 initialOrbit = initialState.getOrbit();
@@ -607,7 +609,6 @@ public class PropagatorNumeryczny_Zblizenia_NEW {
                 KeplerianOrbit o1 = (KeplerianOrbit) OrbitType.KEPLERIAN.convertType(currentState1.getOrbit());
 
 
-
                 if (start) {
                     output.format(Locale.US, "%s %12.8f %12.3f %10.8f %10.6f %10.6f %10.6f %10.6f%n",
                             currentState.getDate(),
@@ -653,7 +654,6 @@ public class PropagatorNumeryczny_Zblizenia_NEW {
                             pv.getVelocity().getZ() * 0.001); //"velocity along Z (km/s)"
 
 
-
                     output4.format(Locale.US, "%s %12.8f %12.3f %10.8f %10.6f %10.6f %10.6f %10.6f%n",
                             currentState1.getDate(),
                             currentState1.getDate().durationFrom(initialDate) / 86400.0,
@@ -686,6 +686,7 @@ public class PropagatorNumeryczny_Zblizenia_NEW {
                             FastMath.toDegrees(MathUtils.normalizeAngle(currentState1.getOrbit().getLM(), FastMath.PI)));
 
 
+
                     final PVCoordinates pv1 = currentState1.getPVCoordinates();
                     output7.format(Locale.US, "%s %12.8f %12.3f %10.8f %10.6f %10.6f %10.6f %10.6f%n",
                             currentState1.getDate(),
@@ -702,32 +703,44 @@ public class PropagatorNumeryczny_Zblizenia_NEW {
                     AbsoluteDate date1 = currentState1.getDate();
                     Vector3D P2 = currentState1.getPVCoordinates().getPosition();
                     double distance_m = Vector3D.distance(P1, P2); //[m]
-                    double distance_km = Vector3D.distance(P1, P2)*0.001; //[km]
-                    if (distance_km<=1000.0)
-                    {
-                        stepT=durTime/2;
-                        if (distance_km<=500.0){
-                            stepT=stepT/2;
-                            if (distance_km<=200.0){
-                                stepT=stepT/2;
-                                if(distance_km<=100.0) {
-                                    stepT = 0.01;
-                                    if(distance_km<=50.0) {
-                                        stepT = 0.001;
-                                    }
-                                    }
-
-                            }
-
-                        }
+                    double distance_km = Vector3D.distance(P1, P2) * 0.001; //[km]
+                    if (distance_km <= 1000.0) {
+                        stepT = durTime;
+//                        stepT = durTime / 4;
+//                        if (distance_km <= 500.0) {
+//                            stepT = stepT / 4;
+//                            if (distance_km <= 200.0) {
+//                                stepT = stepT / 2;
+//                                if (distance_km <= 100.0) {
+//                                    stepT = stepT / 4;
+//                                    if (distance_km <= 50.0) {
+//                                        stepT = stepT / 4;
+//                                        if (distance_km <= 40.0) {
+//                                            stepT = stepT / 2;
+//                                            if (distance_km <= 30.0) {
+//                                                stepT = 0.1;
+//                                                if (distance_km <= 25.0) {
+//                                                    stepT = 0.05;
+//                                                    if (distance_km <= 10.0) {
+//                                                        stepT = 0.001;
+//                                                    }
+//                                                }
+//                                            }
+//                                        }
+//                                    }
+//
+//                                }
+//
+//                            }
+//
+//                        }
 
                     }
                     System.out.format(Locale.US, "%s %s %12.8f %12.8f %12.8f%n",
-                            stepT, date, date.durationFrom(initialDate), distance_m,distance_km);
+                            stepT, date, date.durationFrom(initialDate) / 86400.0, distance_m, distance_km);
                     output8.format(Locale.US, "%s %s %12.8f %12.8f %12.8f%n",
-                            stepT, date, date.durationFrom(initialDate), distance_m,distance_km);
+                            stepT, date, date.durationFrom(initialDate) / 86400.0, distance_m, distance_km);
                 }
-
             }
 
 
@@ -742,9 +755,9 @@ public class PropagatorNumeryczny_Zblizenia_NEW {
             output8.close();
 
         }
-        }
-
     }
+}
+
 
 
 
