@@ -40,17 +40,15 @@ import org.orekit.utils.PVCoordinatesProvider;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.text.DateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.temporal.JulianFields;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Scanner;
 
 
-public class PropagatorNumeryczny_Zblizenia_NEW {
+public class PropagatorNumeryczny_Zblizenia_TLE {
     public static void main(String[] args) throws FileNotFoundException {
 
 //wczytuję dane z orekit-data
@@ -219,86 +217,10 @@ public class PropagatorNumeryczny_Zblizenia_NEW {
             Orbit initialOrbit = null;
             SpacecraftState initialState = null;
             area = 0;
-            if (type == 1) {
-                double a = elements_map.get("a");                 // semi major axis in meters
-                double e = elements_map.get("e");               // eccentricity
-                double i = Math.toRadians(elements_map.get("i"));        // inclination
-                double omega = Math.toRadians(elements_map.get("omega"));  // perigee argument
-                double raan = Math.toRadians(elements_map.get("raan"));   // right ascension of ascending node
-                double lM = elements_map.get("lM");  // mean anomaly
-
-                // double mass = elements_map.get("mass"); //satellite mass
-                mass = elements_map.get("mass"); //satellite mass
-                area = elements_map.get("area");
-                cr = elements_map.get("pressureCr");
-                cd = elements_map.get("dragCd");
-
-                LocalDateTime date = LocalDateTime.parse(data, formatter);
-
-                //Przypisanie wartości elementom
-                //data elementów 1 obiektu
-                int year = date.getYear();
-                int month = date.getMonthValue();
-                int day = date.getDayOfMonth();
-                int hour = date.getHour();
-                int min = date.getMinute();
-                int sec = date.getSecond();
-                double miliSec = date.getNano() / 1000000;
-                double sekPlusMili = sec + miliSec / 1000.0;
-
-                date1ob = new AbsoluteDate(year, month, day, hour, min, sekPlusMili, utc);
-                initialOrbit = new KeplerianOrbit(a, e, i, omega, raan, lM, PositionAngle.MEAN,
-                        inertialFrame, date1ob, mu);
-
-
-                // Initial state definition
-                initialState = new SpacecraftState(initialOrbit);
-
-            }
-            //definiuję początkową orbitę - Cartesian Orbit
-            else if (type == 2) {
-                double x = elements_map.get("x");                 // semi major axis in meters
-                double y = elements_map.get("y");               // eccentricity
-                double z = elements_map.get("z");        // inclination
-                double vx = elements_map.get("vx");  // perigee argument
-                double vy = elements_map.get("vy");   // right ascension of ascending node
-                double vz = elements_map.get("vz");  // mean anomaly
-
-                mass = elements_map.get("mass"); //satellite mass
-                area = elements_map.get("area");
-                cr = elements_map.get("pressureCr");
-                cd = elements_map.get("dragCd");
-
-                //initialOrbit = new CartesianOrbit(x,y,z,vx,vy,vz,inertialFrame, date1ob, mu);
-                Vector3D position = new Vector3D(x, y, z);
-                Vector3D velocity = new Vector3D(vx, vy, vz);
-                PVCoordinates pv = new PVCoordinates(position, velocity);
-
-
-                LocalDateTime date = LocalDateTime.parse(data, formatter);
-
-                //Przypisanie wartości elementom
-                //data elementów 1 obiektu
-                int year = date.getYear();
-                int month = date.getMonthValue();
-                int day = date.getDayOfMonth();
-                int hour = date.getHour();
-                int min = date.getMinute();
-                int sec = date.getSecond();
-                double miliSec = date.getNano() / 1000000;
-                double sekPlusMili = sec + miliSec / 1000.0;
-
-                date1ob = new AbsoluteDate(year, month, day, hour, min, sekPlusMili, utc);
-                initialOrbit = new CartesianOrbit(pv, inertialFrame, date1ob, mu);
-
-                // Initial state definition
-                initialState = new SpacecraftState(initialOrbit);
-            }
 
             //definiuję początkową orbitę - TLE
-            else if (type == 3) {
-                TLE tle1 = new TLE(line1_1, line2_1);
 
+                TLE tle1 = new TLE(line1_1, line2_1);
                 TLEPropagator propagatorTle = TLEPropagator.selectExtrapolator(tle1);
                 mass = elements_map.get("mass"); //satellite mass
                 area = elements_map.get("area");
@@ -306,13 +228,9 @@ public class PropagatorNumeryczny_Zblizenia_NEW {
                 cd = elements_map.get("dragCd");
 
                 date1ob = tle1.getDate();
-                initialState = propagatorTle.getInitialState();
+                initialState =  SGP4.selectExtrapolator(tle1).getInitialState();;
 
                 initialOrbit = initialState.getOrbit();
-
-
-            }
-
             double date1obToIniDate = initialDate.durationFrom(date1ob);
 
             System.out.println(date1obToIniDate);
@@ -321,100 +239,18 @@ public class PropagatorNumeryczny_Zblizenia_NEW {
             Orbit initialOrbit1 = null;
             SpacecraftState initialState1 = null;
 
-            if (type == 1) {
-                double a1 = elements_map.get("a1");                 // semi major axis in meters
-                double e1 = elements_map.get("e1");               // eccentricity
-                double i1 = Math.toRadians(elements_map.get("i1"));        // inclination
-                double omega1 = Math.toRadians(elements_map.get("omega1"));  // perigee argument
-                double raan1 = Math.toRadians(elements_map.get("raan1"));   // right ascension of ascending node
-                double lM1 = elements_map.get("lM1");  // mean anomaly
-
-                // double mass = elements_map.get("mass"); //satellite mass
-                mass1 = elements_map.get("mass1"); //satellite mass
-                area1 = elements_map.get("area1");
-                cr1 = elements_map.get("pressureCr1");
-                cd1 = elements_map.get("dragCd1");
-
-                LocalDateTime date1 = LocalDateTime.parse(data1, formatter);
-
-                //Przypisanie wartości elementom
-                //data elementów 1 obiektu
-                int year1 = date1.getYear();
-                int month1 = date1.getMonthValue();
-                int day1 = date1.getDayOfMonth();
-                int hour1 = date1.getHour();
-                int min1 = date1.getMinute();
-                int sec1 = date1.getSecond();
-                double miliSec1 = date1.getNano() / 1000000;
-                double sekPlusMili1 = sec1 + miliSec1 / 1000.0;
-
-                date2ob = new AbsoluteDate(year1, month1, day1, hour1, min1, sekPlusMili1, utc);
-                initialOrbit1 = new KeplerianOrbit(a1, e1, i1, omega1, raan1, lM1, PositionAngle.MEAN,
-                        inertialFrame, date2ob, mu);
-
-
-                // Initial state definition
-                initialState1 = new SpacecraftState(initialOrbit1);
-
-            }
-            //definiuję początkową orbitę - Cartesian Orbit
-            else if (type == 2) {
-                double x1 = elements_map.get("x1");                 // semi major axis in meters
-                double y1 = elements_map.get("y1");               // eccentricity
-                double z1 = elements_map.get("z1");        // inclination
-                double vx1 = elements_map.get("vx1");  // perigee argument
-                double vy1 = elements_map.get("vy1");   // right ascension of ascending node
-                double vz1 = elements_map.get("vz1");  // mean anomaly
-
-                mass1 = elements_map.get("mass1"); //satellite mass
-                area1 = elements_map.get("area1");
-                cr1 = elements_map.get("pressureCr1");
-                cd1 = elements_map.get("dragCd1");
-
-                //initialOrbit = new CartesianOrbit(x,y,z,vx,vy,vz,inertialFrame, date1ob, mu);
-                Vector3D position = new Vector3D(x1, y1, z1);
-                Vector3D velocity = new Vector3D(vx1, vy1, vz1);
-                PVCoordinates pv = new PVCoordinates(position, velocity);
-
-
-                LocalDateTime date1 = LocalDateTime.parse(data1, formatter);
-
-                //Przypisanie wartości elementom
-                //data elementów 1 obiektu
-                int year1 = date1.getYear();
-                int month1 = date1.getMonthValue();
-                int day1 = date1.getDayOfMonth();
-                int hour1 = date1.getHour();
-                int min1 = date1.getMinute();
-                int sec1 = date1.getSecond();
-                double miliSec1 = date1.getNano() / 1000000;
-                double sekPlusMili1 = sec1 + miliSec1 / 1000.0;
-
-                date2ob = new AbsoluteDate(year1, month1, day1, hour1, min1, sekPlusMili1, utc);
-                initialOrbit1 = new CartesianOrbit(pv, inertialFrame, date2ob, mu);
-
-                // Initial state definition
-                initialState1 = new SpacecraftState(initialOrbit1);
-            }
-
-            //definiuję początkową orbitę - TLE
-            else if (type == 3) {
                 TLE tle2 = new TLE(line1_2, line2_2);
 
-                TLEPropagator propagatorTle = TLEPropagator.selectExtrapolator(tle2);
+                TLEPropagator propagatorTle1 = TLEPropagator.selectExtrapolator(tle2);
                 mass1 = elements_map.get("mass1"); //satellite mass
                 area1 = elements_map.get("area1");
                 cr1 = elements_map.get("pressureCr1");
                 cd1 = elements_map.get("dragCd1");
 
                 date2ob = tle2.getDate();
-                initialState1 = propagatorTle.getInitialState();
+                initialState1 =  SGP4.selectExtrapolator(tle2).getInitialState();;
 
                 initialOrbit1 = initialState1.getOrbit();
-
-
-            }
-
             double date2obToIniDate = initialDate.durationFrom(date2ob);
 
             System.out.println(date2obToIniDate);
@@ -432,22 +268,24 @@ public class PropagatorNumeryczny_Zblizenia_NEW {
             OrbitType propagationType = OrbitType.CARTESIAN;
 
 
-
-
             double[][] tolerances =
                     NumericalPropagator.tolerances(positionTolerance, initialOrbit, propagationType);
+            double[][] tolerances1 =
+                    NumericalPropagator.tolerances(positionTolerance, initialOrbit1, propagationType);
 
             AdaptiveStepsizeIntegrator integrator =
                     new DormandPrince853Integrator(minStep, maxstep, tolerances[0], tolerances[1]);
+            AdaptiveStepsizeIntegrator integrator1 =
+                    new DormandPrince853Integrator(minStep, maxstep, tolerances1[0], tolerances1[1]);
 
-
-            NumericalPropagator propagator = new NumericalPropagator(integrator);
-            NumericalPropagator propagator1 = new NumericalPropagator(integrator);
-            propagator.setOrbitType(propagationType);
-            propagator1.setOrbitType(propagationType);
-
-            propagator.setInitialState(initialState);
-            propagator1.setInitialState(initialState1);
+            TLEPropagator propagator = TLEPropagator.selectExtrapolator(tle1);
+            TLEPropagator propagator1 = TLEPropagator.selectExtrapolator(tle2);
+//            NumericalPropagator propagator1 = new NumericalPropagator(integrator1);
+//            propagator.setOrbitType(propagationType);
+//            propagator1.setOrbitType(propagationType);
+//
+//            propagator.setInitialState(initialState);
+//            propagator1.setInitialState(initialState1);
 
 //dodaję modele sił
             //GRAWITACJA
@@ -456,23 +294,23 @@ public class PropagatorNumeryczny_Zblizenia_NEW {
             ForceModel holmesFeatherstone =
                     new HolmesFeatherstoneAttractionModel(FramesFactory.getITRF(IERSConventions.IERS_2010, true), provider);
 
-            if (gravity_force == 1) {
-                propagator.addForceModel(holmesFeatherstone);
-                propagator1.addForceModel(holmesFeatherstone);
-            }
+//            if (gravity_force == 1) {
+//                propagator.addForceModel(holmesFeatherstone);
+//                propagator1.addForceModel(holmesFeatherstone);
+//            }
 
 
             //TRZECIE CIALO
             ForceModel sun = new ThirdBodyAttraction(CelestialBodyFactory.getSun());
-            if (sun_force == 1) {
-                propagator.addForceModel(sun);
-                propagator1.addForceModel(sun);
-            }
+//            if (sun_force == 1) {
+//                propagator.addForceModel(sun);
+//                propagator1.addForceModel(sun);
+//            }
             ForceModel moon = new ThirdBodyAttraction(CelestialBodyFactory.getMoon());
-            if (moon_force == 1) {
-                propagator.addForceModel(moon);
-                propagator1.addForceModel(moon);
-            }
+//            if (moon_force == 1) {
+//                propagator.addForceModel(moon);
+//                propagator1.addForceModel(moon);
+//            }
 
             //CISNIENIE PROMIENIOWANIA SLONECZNEGO
 
@@ -483,10 +321,10 @@ public class PropagatorNumeryczny_Zblizenia_NEW {
                     body.getEquatorialRadius(), new IsotropicRadiationSingleCoefficient(area1, cr1));
 
 
-            if (SRP_force == 1) {
-                propagator.addForceModel(solarRadiationPressure);
-                propagator1.addForceModel(solarRadiationPressure1);
-            }
+//            if (SRP_force == 1) {
+//                propagator.addForceModel(solarRadiationPressure);
+//                propagator1.addForceModel(solarRadiationPressure1);
+//            }
 
 
             //PLYWY OCEANICZNE
@@ -498,10 +336,10 @@ public class PropagatorNumeryczny_Zblizenia_NEW {
                     IERSconventions,
                     TimeScalesFactory.getUT1(IERSconventions, true));
 
-            if (OT_force == 1) {
-                propagator.addForceModel(oceanTides);
-                propagator1.addForceModel(oceanTides);
-            }
+//            if (OT_force == 1) {
+//                propagator.addForceModel(oceanTides);
+//                propagator1.addForceModel(oceanTides);
+//            }
 
 
             //SILY RELATYWISTYCZNE
@@ -523,10 +361,10 @@ public class PropagatorNumeryczny_Zblizenia_NEW {
                 //atmosphere = new DTM2000(parameters, SUN != null ? SUN : SUN, body);
                 atmosphere = new DTM2000(spaceWeatherData, SUN != null ? SUN : SUN, body);
                 DragForce dragForce = new DragForce(atmosphere, new IsotropicDrag(area, cd));
-                propagator.addForceModel(dragForce);
+                //propagator.addForceModel(dragForce);
 
                 DragForce dragForce1 = new DragForce(atmosphere, new IsotropicDrag(area1, cd1));
-                propagator1.addForceModel(dragForce1);
+                //propagator1.addForceModel(dragForce1);
 
 
             }
@@ -535,10 +373,10 @@ public class PropagatorNumeryczny_Zblizenia_NEW {
                 PVCoordinatesProvider SUN = CelestialBodyFactory.getSun();
                 atmosphere = new HarrisPriester(sun != null ? SUN : SUN, body);
                 DragForce dragForce = new DragForce(atmosphere, new IsotropicDrag(area, cd));
-                propagator.addForceModel(dragForce);
+               // propagator.addForceModel(dragForce);
 
                 DragForce dragForce1 = new DragForce(atmosphere, new IsotropicDrag(area1, cd1));
-                propagator1.addForceModel(dragForce1);
+                //propagator1.addForceModel(dragForce1);
             }
 
             if (ATMmodel == 3) {
@@ -549,9 +387,9 @@ public class PropagatorNumeryczny_Zblizenia_NEW {
 
                 atmosphere = new JB2008(parameters, sun != null ? SUN : SUN, body);
                 DragForce dragForce = new DragForce(atmosphere, new IsotropicDrag(area, cd));
-                propagator.addForceModel(dragForce);
+               // propagator.addForceModel(dragForce);
                 DragForce dragForce1 = new DragForce(atmosphere, new IsotropicDrag(area1, cd1));
-                propagator1.addForceModel(dragForce1);
+                //propagator1.addForceModel(dragForce1);
 
             }
 
@@ -562,9 +400,9 @@ public class PropagatorNumeryczny_Zblizenia_NEW {
 
                 atmosphere = new NRLMSISE00(spaceWeatherData, CelestialBodyFactory.getSun(), body);
                 DragForce dragForce = new DragForce(atmosphere, new IsotropicDrag(area, cd));
-                propagator.addForceModel(dragForce);
+               // propagator.addForceModel(dragForce);
                 DragForce dragForce1 = new DragForce(atmosphere, new IsotropicDrag(area1, cd1));
-                propagator1.addForceModel(dragForce1);
+                //propagator1.addForceModel(dragForce1);
 
 
             }
@@ -707,8 +545,8 @@ public class PropagatorNumeryczny_Zblizenia_NEW {
                     Vector3D P2 = currentState1.getPVCoordinates().getPosition();
                     double distance_m = Vector3D.distance(P1, P2); //[m]
                     double distance_km = Vector3D.distance(P1, P2) * 0.001; //[km]
-                    if (distance_km <= 1000.0) {
-                        stepT = durTime;
+//                    if (distance_km <= 1000.0) {
+//                        stepT = durTime;
 //                        stepT = durTime / 4;
 //                        if (distance_km <= 500.0) {
 //                            stepT = stepT / 4;
@@ -737,8 +575,8 @@ public class PropagatorNumeryczny_Zblizenia_NEW {
 //                            }
 //
 //                        }
-
-                    }
+//
+//                    }
                     System.out.format(Locale.US, "%s %s %12.8f %12.8f %12.8f%n",
                             stepT, date, date.durationFrom(initialDate) / 86400.0, distance_m, distance_km);
                     output8.format(Locale.US, "%s %s %12.8f %12.8f %12.8f%n",
